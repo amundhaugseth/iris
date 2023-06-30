@@ -31,28 +31,10 @@ RUN : \
   && pipx install conda-lock \
 ;
 
+# Install the tree command
+RUN sudo apt-get update && sudo apt-get install -y tree
+
 # Create and set the workspace folder
 ARG CONTAINER_WORKSPACE_FOLDER=/workspaces/default-workspace-folder
 RUN mkdir -p "${CONTAINER_WORKSPACE_FOLDER}"
 WORKDIR "${CONTAINER_WORKSPACE_FOLDER}"
-
-# Copy only the files necessary to install the project.
-# (Remember that we will bind-mount the full project folder after build time.)
-COPY --chown=$MAMBA_USER:$MAMBA_USER pyproject.toml ./
-# Set the version number to zero to avoid cache busting dependency installation
-# when the version number changes.
-RUN : \
-    && mkdir --parents "python/example_project/" \
-    && echo '__version__ = "0.0.0"' > "python/example_project/__init__.py" \
-    ;
-
-# Install the package for the first time to add project-level dependencies
-RUN pip install --no-cache-dir --editable .
-
-# Copy the real __init__.py
-COPY --chown=$MAMBA_USER:$MAMBA_USER \
-    "python/example_project/__init__.py" \
-    "python/example_project/"
-
-# Reinstall to fix the version number
-RUN pip install --no-cache-dir --editable .
